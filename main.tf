@@ -10,16 +10,14 @@ terraform {
 
 // want to use aws, with creds
 provider "aws" {
-  region     = "eu-central-1"
-  access_key = "AKIATRGLIIG3E4UBC3EA"
-  secret_key = "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"
+  region = "eu-central-1"
 }
 
 resource "aws_vpc" "dev-vpc" {
   cidr_block = "10.0.0.0/16"
   tags = {
     terraform = "true"
-    Name      = "test-name-vpc"
+    Name      = "test-name-vpc-update"
   }
 }
 
@@ -27,8 +25,4 @@ resource "aws_vpc" "dev-vpc" {
 resource "aws_subnet" "dev-subnet" {
   cidr_block = "10.0.10.0/24"
   vpc_id     = aws_vpc.dev-vpc.id
-}
-
-data "" "name" {
-  
 }
