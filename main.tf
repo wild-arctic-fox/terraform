@@ -16,6 +16,7 @@ variable "subnet_cidr_block" {}
 variable "avail_zone" {}
 variable "env_prefix" {}
 variable "my_ip" {}
+variable "instance_type" {}
 
 resource "aws_vpc" "test-app-vpc" {
   cidr_block = var.vpc_cidr_block
@@ -98,5 +99,36 @@ resource "aws_security_group" "test-app-security-group" {
   tags = {
     terraform = "true"
     Name      = "${var.env_prefix}-sg"
+  }
+}
+
+data "aws_ami" "aws-linux-image" {
+  most_recent = true
+  owners      = ["amazon"]
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-kernel-*-x86_64-gp2"]
+  }
+
+}
+
+output "aws_ami" {
+  value = data.aws_ami.aws-linux-image
+}
+
+resource "aws_instance" "test-app-ec2" {
+  ami           = data.aws_ami.aws-linux-image.id
+  instance_type = var.instance_type
+
+  // optional
+  subnet_id                   = aws_subnet.test-app-subnet-1.id
+  vpc_security_group_ids      = [aws_security_group.test-app-security-group.id]
+  availability_zone           = var.avail_zone
+  associate_public_ip_address = true
+  key_name                    = "aws-ssh-keys-tf-eu"
+
+  tags = {
+    terraform = "true"
+    Name      = "${var.env_prefix}-ec2"
   }
 }
