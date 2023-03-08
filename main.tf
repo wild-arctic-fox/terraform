@@ -17,6 +17,7 @@ variable "avail_zone" {}
 variable "env_prefix" {}
 variable "my_ip" {}
 variable "instance_type" {}
+variable "public_key_location" {}
 
 resource "aws_vpc" "test-app-vpc" {
   cidr_block = var.vpc_cidr_block
@@ -116,6 +117,16 @@ output "aws_ami" {
   value = data.aws_ami.aws-linux-image
 }
 
+output "ec2_public_ip" {
+  value = aws_instance.test-app-ec2.public_ip
+}
+
+resource "aws_key_pair" "ssh-key" {
+  key_name   = "ssh-key-tf-generated"
+  public_key = file(var.public_key_location)
+
+}
+
 resource "aws_instance" "test-app-ec2" {
   ami           = data.aws_ami.aws-linux-image.id
   instance_type = var.instance_type
@@ -125,7 +136,7 @@ resource "aws_instance" "test-app-ec2" {
   vpc_security_group_ids      = [aws_security_group.test-app-security-group.id]
   availability_zone           = var.avail_zone
   associate_public_ip_address = true
-  key_name                    = "aws-ssh-keys-tf-eu"
+  key_name                    = aws_key_pair.ssh-key.key_name
 
   tags = {
     terraform = "true"

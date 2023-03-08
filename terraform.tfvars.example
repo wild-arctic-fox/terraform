@@ -4,3 +4,4 @@ avail_zone = "eu-central-1a"
 env_prefix = "dev"
 my_ip =
 instance_type = "t2.micro"
+public_key_location =
