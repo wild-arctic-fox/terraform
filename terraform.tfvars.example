@@ -1,7 +1,7 @@
 vpc_cidr_block = 
 subnet_cidr_block = 
-avail_zone = "eu-central-1a"
+avail_zone = "eu-central-1b"
 env_prefix = "dev"
 my_ip =
 instance_type = "t2.micro"
-public_key_location =
+public_key_location = "~/.ssh/id_rsa.pub"
