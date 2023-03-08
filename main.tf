@@ -29,8 +29,8 @@ resource "aws_vpc" "test-app-vpc" {
 
 
 resource "aws_subnet" "test-app-subnet-1" {
-  cidr_block = var.subnet_cidr_block
-  vpc_id     = aws_vpc.test-app-vpc.id
+  cidr_block        = var.subnet_cidr_block
+  vpc_id            = aws_vpc.test-app-vpc.id
   availability_zone = var.avail_zone
   tags = {
     terraform = "true"
@@ -134,13 +134,7 @@ resource "aws_instance" "test-app-ec2" {
 
   // executed 1 time
   user_data_replace_on_change = true
-  user_data                   = <<EOF
-                #!/bin/bash
-                sudo yum update -y && sudo yum install docker -y
-                sudo systemctl start docker
-                sudo usermod -aG docker ec2-user
-                docker run -p 8080:80 nginx
-                EOF
+  user_data                   = file("entry-script.sh")
 
   tags = {
     terraform = "true"
