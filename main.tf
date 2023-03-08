@@ -18,6 +18,7 @@ variable "env_prefix" {}
 variable "my_ip" {}
 variable "instance_type" {}
 variable "public_key_location" {}
+variable "private_key_location" {}
 
 resource "aws_vpc" "test-app-vpc" {
   cidr_block = var.vpc_cidr_block
@@ -140,7 +141,38 @@ resource "aws_instance" "test-app-ec2" {
     terraform = "true"
     Name      = "${var.env_prefix}-ec2"
   }
+
+  connection {
+    type        = "ssh"
+    host        = self.public_ip
+    user        = "ec2-user"
+    private_key = file(var.private_key_location)
+  }
+
+  // Provisioners are NOT RECOMMENDED
+  // The file provisioner copies file from local to remote 
+  provisioner "file" {
+    source      = "entry-script.sh"
+    destination = "/home/ec2-user/entry-script.sh"
+  }
+
+  // The remote-exec provisioner invokes a script on a remote resource after it is created. 
+  provisioner "remote-exec" {
+    inline = [
+      "export ENV=dev",
+      "touch test.txt"
+    ]
+
+    // Should exist on remote server
+    // script = file("entry-script.sh")
+  }
+
+  provisioner "local-exec" {
+    command = "echo ${self.public_ip} > output.txt"
+  }
 }
+
+
 
 
 output "aws_ami" {
@@ -150,7 +182,3 @@ output "aws_ami" {
 output "ec2_public_ip" {
   value = aws_instance.test-app-ec2
 }
-
-# output "ip" {
-#   value = "${aws_eip_association.stage-eip-assoc.public_ip}"
-# }
