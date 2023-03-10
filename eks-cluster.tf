@@ -1,25 +1,30 @@
-# EKS cluster module - create control plane("master nodes")
+variable "my_ips" {}
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "19.10.0"
 
-  # must match to "kubernetes.io/cluster/test-app-eks-cluster" = "shared"
-  cluster_name = "test-app-eks-cluster"
-  #   k8s version
-  cluster_version = "1.24"
-  subnet_ids      = module.test-app-vpc.private_subnets
-  vpc_id          = module.test-app-vpc.vpc_id
+  cluster_name    = "myapp-eks-cluster"
+  cluster_version = "1.22"
 
+  subnet_ids = module.myapp-vpc.private_subnets
+  vpc_id     = module.myapp-vpc.vpc_id
+
+  cluster_endpoint_public_access       = true
+  cluster_endpoint_public_access_cidrs = var.my_ips
+
+  putin_khuylo = true
   tags = {
-    Environment = "dev"
+    environment = "development"
+    application = "myapp"
   }
 
   eks_managed_node_groups = {
     dev = {
-      min_size       = 1
-      max_size       = 3
-      desired_size   = 2
+      min_size     = 1
+      max_size     = 3
+      desired_size = 3
+
       instance_types = ["t2.small"]
     }
   }

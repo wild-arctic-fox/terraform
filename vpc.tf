@@ -1,50 +1,40 @@
-variable "private_subnet_cidr_block" {}
-variable "public_subnet_cidr_block" {}
-variable "vpc_cidr_block" {}
-
 provider "aws" {
   region = "eu-west-2"
 }
 
-# query aws api to get all azs for region
-data "aws_availability_zones" "azs" {}
+variable "vpc_cidr_block" {}
+variable "private_subnet_cidr_blocks" {}
+variable "public_subnet_cidr_blocks" {}
 
-# ready module
-module "test-app-vpc" {
+data "aws_availability_zones" "available" {}
+
+
+module "myapp-vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "3.19.0"
 
-  name = "test-app-vpc"
-  cidr = var.vpc_cidr_block
+  name            = "myapp-vpc"
+  cidr            = var.vpc_cidr_block
+  private_subnets = var.private_subnet_cidr_blocks
+  public_subnets  = var.public_subnet_cidr_blocks
+  azs             = data.aws_availability_zones.available.names
 
-  azs             = data.aws_availability_zones.azs.names
-  private_subnets = var.private_subnet_cidr_block
-  public_subnets  = var.public_subnet_cidr_block
-
-
-  enable_nat_gateway = true
-  # creates shared common gateway for all the private subnets
-  single_nat_gateway = true
-  # to assign public/private ip, public/private dns
+  enable_nat_gateway   = true
+  single_nat_gateway   = true
   enable_dns_hostnames = true
 
-  putin_khuylo = true
-
-  #  REQUIRED
   tags = {
-    # to reference from another components
-    "kubernetes.io/cluster/test-app-eks-cluster" = "shared"
-    Terraform                                    = "true"
-    Environment                                  = "dev"
+    "kubernetes.io/cluster/myapp-eks-cluster" = "shared"
   }
 
   public_subnet_tags = {
-    "kubernetes.io/cluster/test-app-eks-cluster" = "shared"
-    "kubernetes.io/role/elb"                     = 1
+    "kubernetes.io/cluster/myapp-eks-cluster" = "shared"
+    "kubernetes.io/role/elb"                  = 1
   }
 
   private_subnet_tags = {
-    "kubernetes.io/cluster/test-app-eks-cluster" = "shared"
-    "kubernetes.io/role/internal-elb"            = 1
+    "kubernetes.io/cluster/myapp-eks-cluster" = "shared"
+    "kubernetes.io/role/internal-elb"         = 1
   }
+
 }
