@@ -18,6 +18,8 @@ variable "env_prefix" {}
 variable "my_ip" {}
 variable "instance_type" {}
 variable "public_key_location" {}
+variable "private_key_location" {}
+variable "ansible_user" {}
 
 resource "aws_vpc" "test-app-vpc" {
   cidr_block = var.vpc_cidr_block
@@ -90,6 +92,20 @@ resource "aws_security_group" "test-app-security-group" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 9443
+    to_port     = 9443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   // outbound traffic port: 0 => any port, protocol: -1 => all
   egress {
     from_port       = 0
@@ -116,7 +132,7 @@ data "aws_ami" "aws-linux-image" {
 
 
 resource "aws_key_pair" "ssh-key" {
-  key_name   = "ssh-key-tf-generated"
+  key_name   = "ssh-key-tf-generated-x3"
   public_key = file(var.public_key_location)
 
 }
@@ -132,9 +148,11 @@ resource "aws_instance" "test-app-ec2" {
   associate_public_ip_address = true
   key_name                    = aws_key_pair.ssh-key.key_name
 
-  // executed 1 time
-  user_data_replace_on_change = true
-  user_data                   = file("entry-script.sh")
+  provisioner "local-exec" {
+    working_dir = "/home/alyona/Desktop/ansible"
+    command     = "ansible-playbook --inventory ${self.public_ip}, --private-key ${var.private_key_location} --user ${var.ansible_user} deploy-docker-ec2-playbook.yaml"
+  }
+
 
   tags = {
     terraform = "true"
@@ -150,7 +168,3 @@ output "aws_ami" {
 output "ec2_public_ip" {
   value = aws_instance.test-app-ec2
 }
-
-# output "ip" {
-#   value = "${aws_eip_association.stage-eip-assoc.public_ip}"
-# }
